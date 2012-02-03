@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <title>g·Raphaël Stacks Charts</title>
+
+        <script src="http://raphaeljs.com/raphael.js"></script>
+        <script src="http://g.raphaeljs.com/g.raphael.js"></script>
+        <script src="g.stacks.js"></script>
+        <script>
+            window.onload = function () {
+                var r = Raphael("holder");
+                r.barchart2(10, 10, 800, 600, [[15, 2, 80, 8, 17, 1, 25, 5, 6, 3]], 0, {type: "sharp"});
+            };
+        </script>
+        <style>
+            #holder {
+                margin: 50px auto;
+                width: 800px;
+                height: 600px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="holder"></div>
+    </body>
+</html>
+
