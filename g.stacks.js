@@ -135,18 +135,27 @@
         }
     }
 
-    function stacked_finger(x, y, width, step_height, stack_value, dir, ending, isPath, paper) {
+    function stacked_finger(x, y, width, step_height, value, dir, ending, isPath, paper) {
         var stack = [];
-        for (var i = 0; i < stack_value; i++ ) {
-            stack.push(finger(x, y - i * Math.floor(step_height + step_height/2), width, step_height, dir, ending, isPath, paper));
+        var bh = Math.floor(step_height / 1.5);
+        var is_array = Raphael.is(value, "array");
+        for (var i = 0; i < (is_array ? value.length : value); i++) {
+            var block = finger(x, y - i * step_height, width, bh, dir, ending, isPath, paper);
+            if (is_array) {
+                var title = value[i][0],
+                    color = value[i][1];
+                    //href = value[i][2];
+                block.attr({title : title, fill : color}); //, href : href});
+            }
+            stack.push(block);
         }
         return stack;
     }
 
     /*
-     * Vertical Barchart
+     * Vertical Stacked Barchart
      */
-    function VBarchart2(paper, x, y, width, height, values, opts) {
+    function VStackedBarchart(paper, x, y, width, height, values, opts) {
         opts = opts || {};
 
         var chartinst = this,
@@ -156,106 +165,90 @@
             bars = paper.set(),
             covers = paper.set(),
             covers2 = paper.set(),
-            total = Math.max.apply(Math, values),
-            stacktotal = [],
-            multi = 0,
+            max_in_stack = Math.max.apply(Math, values) || 0,
             colors = opts.colors || chartinst.colors,
             len = values.length;
 
         if (Raphael.is(values[0], "array")) {
-            total = [];
-            multi = len;
-            len = 0;
-
             for (var i = values.length; i--;) {
-//                var bar_set = paper.set();
-//                for (var j = values[i]; j--;) {
-//                    bar_set.push(paper.set());
-//                }
-//
-//                bars.push(bar_set);
-                //bars.push(paper.set());
-
-                total.push(Math.max.apply(Math, values[i]));
-
-                len = Math.max(len, values[i].length);
+                max_in_stack = Math.max(max_in_stack, values[i].length);
             }
-
-            for (var i = values.length; i--;) {
-                if (values[i].length < len) {
-                    for (var j = len; j--;) {
-                        values[i].push(0);
-                    }
-                }
-            }
-
-            total = Math.max.apply(Math, total);
+        } else {
+            max_in_stack = Math.max.apply(Math, values);
         }
-        
-        total = (opts.to) || total;
+
+//            for (var i = values.length; i--;) {
+//                max_in_stack.push(values[i].length);
+//                len = Math.max(len, values[i].length);
+//            }
+//            max_in_stack = Math.max.apply(Math, max_in_stack);
+
+//            for (var i = values.length; i--;) {
+//                if (values[i].length < len) {
+//                    for (var j = len; j--;) {
+//                        values[i].push(0);
+//                    }
+//                }
+//            }
+
+        max_in_stack = (opts.to) || max_in_stack;
 
         var barwidth = width / (len * (100 + gutter) + gutter) * 100,
             barhgutter = barwidth * gutter / 100,
             barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
             stack = [],
             X = x + barhgutter,
-            Y = (height - 2 * barvgutter) / total;
+            Y = (height - 2 * barvgutter) / max_in_stack;
 
         if (!opts.stretch) {
             barhgutter = Math.round(barhgutter);
             barwidth = Math.floor(barwidth);
         }
 
-        !opts.stacked && (barwidth /= multi || 1);
+        //!opts.stacked && (barwidth /= multi || 1);
 
         for (var i = 0; i < len; i++) {
-            stack = [];
+            var v = values[i];
 
+            var h = Math.round((Raphael.is(values[i], "array") ? values[i].length : values[i]) * Y),
+                top = y + height - barvgutter - h,
+                bar = stacked_finger(
+                    Math.round(X + barwidth / 2),
+                    top + h,
+                    barwidth,
+                    Y,
+                    v,
+                    true, type, null, paper);
 
-            for (var j = 0; j < (multi || 1); j++) {
-                var h = Math.round((multi ? values[j][i] : values[i]) * Y),
-                    top = y + height - barvgutter - h,
-                    max_value = Math.max.apply(null, values[j]),
-                    bar = stacked_finger(
-                        Math.round(X + barwidth / 2),
-                        top + h,
-                        barwidth,
-                        Math.floor(height / max_value),
-                        values[j][i],
-                        true, type, null, paper);
-
-                for(var k = 0; k < bar.length; k++) {
-                    bar[k].attr({ stroke: "none", fill: colors[j] });
+            for(var k = 0; k < bar.length; k++) {
+                if (!bar[k].attrs['fill'] || bar[k].attrs['fill'] == "none") {
+                    bar[k].attr({fill: colors[0] });
                 }
-
-                for(var k = 0; k < bar.length; k++) {
-                    bars.push(bar[k]);
-                    bar[k].y = k * 10;
-                    bar[k].x = Math.round(X + barwidth / 2);
-                    bar[k].w = barwidth;
-                    bar[k].h = 10;
-                    bar[k].value = values[i];
-                }
-                X += barwidth;
+                bar[k].attr({ stroke: "none" });
             }
 
-            X += barhgutter;
+            for(var k = 0; k < bar.length; k++) {
+                bars.push(bar[k]);
+                bar[k].y = k * 10;
+                bar[k].x = Math.round(X + barwidth / 2);
+                bar[k].w = barwidth;
+                bar[k].h = 10;
+                bar[k].value = values[i];
+            }
+            X += barwidth + barhgutter;
         }
 
         covers2.toFront();
         X = x + barhgutter;
 
-        for (var i = 0; i < len; i++) {
-            for (var j = 0; j < (multi || 1); j++) {
-                for (var k = 0; k < bars[i].length; k++) {
-                    var cover;
-                    covers.push(cover = paper.rect(Math.round(X), y + barvgutter, barwidth, height - barvgutter).attr(chartinst.shim));
-                    cover.bar = bars[i][k];
-                    cover.value = cover.bar.value;
-                }
-                X += barwidth;
+        for (var i = 0; i < bars.length; i++) {
+            for (var k = 0; k < bars[i].length; k++) {
+                var cover;
+                covers.push(cover = paper.rect(Math.round(X), y + barvgutter, barwidth, height - barvgutter).attr(chartinst.shim));
+                cover.bar = bars[i][k];
+                cover.value = cover.bar.value;
             }
-
+            X += barwidth;
             X += barhgutter;
         }
 
@@ -267,7 +260,7 @@
 
             for (var i = 0; i < len; i++) {
                 for (var j = 0; j < (multi || 1); j++) {
-                    var label = paper.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
+                    var label = paper.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], max_in_stack);
 
                     L = paper.text(bars[i * (multi || 1) + j].x, isBottom ? y + height - barvgutter / 2 : bars[i * (multi || 1) + j].y - 10, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
@@ -343,9 +336,9 @@
     //inheritance
     var F = function() {};
     F.prototype = Raphael.g;
-    VBarchart2.prototype = new F;
+    VStackedBarchart.prototype = new F;
     
-    Raphael.fn.barchart2 = function(x, y, width, height, values, opts) {
-        return new VBarchart2(this, x, y, width, height, values, opts);
+    Raphael.fn.stackedbarchart = function(x, y, width, height, values, opts) {
+        return new VStackedBarchart(this, x, y, width, height, values, opts);
     };
 })();
