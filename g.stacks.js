@@ -1,5 +1,5 @@
 /*!
- * g.Raphael 0.5 - Charting library, based on Raphaël
+ * g.stacks.Raphael - Stacked bar charts extension for Raphaël, based on Raphaël barchart extension.
  *
  * Copyright (c) 2012 Sergey Polzunov (http://polzunov.com)
  * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
