@@ -1,9 +1,10 @@
 /*!
  * g.Raphael 0.5 - Charting library, based on Raphaël
  *
- * Copyright (c) 2009 Dmitry Baranovskiy (http://g.raphaeljs.com)
+ * Copyright (c) 2012 Sergey Polzunov (http://polzunov.com)
  * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
  */
+
 (function () {
     var mmin = Math.min,
         mmax = Math.max;
