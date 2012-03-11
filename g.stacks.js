@@ -199,7 +199,7 @@
             barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
             stack = [],
             X = x + barhgutter,
-            Y = (height - 2 * barvgutter) / max_in_stack;
+            Y = parseInt((height - 2 * barvgutter) / max_in_stack);
 
         if (!opts.stretch) {
             barhgutter = Math.round(barhgutter);
